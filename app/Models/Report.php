@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Report extends Model
 {
-    protected $fillable = ['reporter_id', 'target_user_id', 'reason'];
+    protected $fillable = ['reporter_id', 'target_user_id', 'reason', 'status', 'moderator_id'];
 
     public function reporter()
     {
@@ -17,6 +17,12 @@ class Report extends Model
     {
         return $this->belongsTo(User::class, 'target_user_id');
     }
+
+    public function moderatorUser()
+    {
+        return $this->belongsTo(User::class, 'moderator_id');
+    }
+
 
     protected function casts(): array
     {

@@ -15,6 +15,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('reporter_id')->constrained('users');
             $table->foreignId("target_user_id")->constrained("users");
+            $table->enum("status", ['pending', 'rejected', 'accepted'])->default('pending');
+            $table->foreignId("moderator_id")->nullable()->constrained("users");
             $table->text("reason");
             $table->timestamps();
         });
