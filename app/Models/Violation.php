@@ -9,7 +9,8 @@ class Violation extends Model
     protected $fillable = [
         'user_id',
         'type',
-        'severity'
+        'severity',
+        'moderator_id'
     ];
 
     protected function casts(): array

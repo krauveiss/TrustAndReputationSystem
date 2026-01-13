@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained();
             $table->enum('type', ['spam', 'abuse', 'cheating', 'exploit']);
             $table->enum('severity', ['minor', 'major', 'critical']);
+            $table->foreignId('moderator_id')->constrained('users');
             $table->timestamps();
         });
     }

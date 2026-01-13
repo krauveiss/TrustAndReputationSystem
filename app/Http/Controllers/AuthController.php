@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
+use App\Models\Reputation;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -19,6 +20,12 @@ class AuthController extends Controller
             'email' => $registerRequest->email,
             'password' => Hash::make($registerRequest->password),
             'role_id' => Role::where('name', 'user')->value('id')
+        ]);
+
+        Reputation::create([
+            'user_id' => $user->id,
+            'score' => 50,
+            'level' => 'medium'
         ]);
 
         $token = $user->createToken('api')->plainTextToken;

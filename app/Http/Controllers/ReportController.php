@@ -21,9 +21,7 @@ class ReportController extends Controller
 
     public function update(ChangeReportStatusRequest $changeReportStatusRequest)
     {
-        if (Gate::denies("moderator")) {
-            abort(404);
-        }
+        Gate::authorize("moderator");
 
         $result = $this->report_service->changeStatus(request()->user(), $changeReportStatusRequest->report_id, $changeReportStatusRequest->status);
         return response()->json($result[0], $result[1]);

@@ -1,11 +1,12 @@
 <?php
 
-namespace App\Http\Requests\Reports;
+namespace App\Http\Requests\Violations;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class ChangeReportStatusRequest extends FormRequest
+class AddViolationRequest extends FormRequest
 {
+
     public function authorize(): bool
     {
         if ($this->user()->role->name == "moderator" || $this->user()->role->name == "admin") {
@@ -14,11 +15,13 @@ class ChangeReportStatusRequest extends FormRequest
         return false;
     }
 
+
     public function rules(): array
     {
         return [
-            'report_id' => ['required', 'exists:reports,id'],
-            'status' => ['required', 'in:pending,rejected,accepted'],
+            'user_id' => ['required', 'exists:users,id'],
+            'type' => ['required', 'in:spam,abuse,cheating'],
+            'severity' => ['required', 'in:major,minor,critical'],
         ];
     }
 }
