@@ -10,7 +10,9 @@ class Violation extends Model
         'user_id',
         'type',
         'severity',
-        'moderator_id'
+        'moderator_id',
+        'status',
+        'comment'
     ];
 
     protected function casts(): array

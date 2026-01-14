@@ -22,6 +22,7 @@ class AddViolationRequest extends FormRequest
             'user_id' => ['required', 'exists:users,id'],
             'type' => ['required', 'in:spam,abuse,cheating'],
             'severity' => ['required', 'in:major,minor,critical'],
+            'comment' => ['string', 'max:50'],
         ];
     }
 }

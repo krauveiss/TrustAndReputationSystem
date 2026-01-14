@@ -23,6 +23,19 @@ class ReputationService
         $this->recalculateLevel($user);
     }
 
+
+    public function setScore($user, $score)
+    {
+        DB::transaction(function () use ($user, $score) {
+            $repObj = Reputation::where('user_id', $user->id)->first();
+            $repObj->score = $score;
+            $repObj->save();
+        });
+        $this->recalculateLevel($user);
+        return [['text' => 'Reputation changed'], 200];
+    }
+
+
     protected function recalculateLevel($user)
     {
         DB::transaction(function () use ($user) {

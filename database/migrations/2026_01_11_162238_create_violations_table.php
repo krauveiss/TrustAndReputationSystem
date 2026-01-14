@@ -17,6 +17,8 @@ return new class extends Migration
             $table->enum('type', ['spam', 'abuse', 'cheating', 'exploit']);
             $table->enum('severity', ['minor', 'major', 'critical']);
             $table->foreignId('moderator_id')->constrained('users');
+            $table->enum('status', ['active', 'canceled'])->default('active');
+            $table->string('comment')->nullable();
             $table->timestamps();
         });
     }

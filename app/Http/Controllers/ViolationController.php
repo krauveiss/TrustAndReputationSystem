@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Violations\AddViolationRequest;
+use App\Http\Requests\Violations\ChangeViolationStatus;
 use App\Services\ViolationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -14,6 +15,13 @@ class ViolationController extends Controller
     {
         Gate::authorize('moderator');
         $result = $this->violation_service->addViolation(request()->user(), $addViolationRequest->user_id, $addViolationRequest->type, $addViolationRequest->severity);
+        return response()->json($result[0], $result[1]);
+    }
+
+    public function update(ChangeViolationStatus $changeViolationStatus)
+    {
+        Gate::authorize('admin');
+        $result = $this->violation_service->changeViolationStatus($changeViolationStatus->violation_id, $changeViolationStatus->status, $changeViolationStatus->comment);
         return response()->json($result[0], $result[1]);
     }
 }

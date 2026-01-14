@@ -6,6 +6,7 @@ use App\Models\Reputation;
 use App\Models\User;
 use App\Models\Violation;
 use Illuminate\Support\Facades\DB;
+use PhpParser\Node\Expr\Array_;
 
 class ViolationService
 {
@@ -15,7 +16,7 @@ class ViolationService
     {
         $this->reputation_service = $reputation_service;
     }
-    public function addViolation($moderator, $user_id, $type, $severity)
+    public function addViolation($moderator, $user_id, $type, $severity, $comment = ''): array
     {
         $user = User::find($user_id);
         if (!$user) {
@@ -43,10 +44,21 @@ class ViolationService
             'user_id' => $user->id,
             'type' => $type,
             'severity' => $severity,
-            'moderator_id' => $moderator->id
+            'moderator_id' => $moderator->id,
+            'comment' => $comment
         ]);
 
         $this->reputation_service->changeScore($user, $score_fine);
         return [['text' => 'Violation added, reputation changed'], 200];
+    }
+
+    public function changeViolationStatus($violation_id, $status, $comment = ""): array
+    {
+        $violation = Violation::find($violation_id);
+
+        $violation->status = $status;
+        $violation->comment = $comment;
+        $violation->save();
+        return [['text' => 'Violation status changed'], 200];
     }
 }

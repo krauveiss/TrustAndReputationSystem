@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Admin\UnbanRequest;
+use App\Http\Requests\Admin\UnTimeOutRequest;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Models\Reputation;
@@ -61,5 +63,17 @@ class AuthController extends Controller
     {
         $request->user()->tokens()->delete();
         return response()->json([], 200);
+    }
+
+    public function unban(UnbanRequest $unbanRequest)
+    {
+        Gate::authorize('admin');
+        $request->user()
+    }
+
+
+    public function untimeout(UnTimeOutRequest $unTimeOutRequest)
+    {
+        Gate::authorize('admin');
     }
 }
