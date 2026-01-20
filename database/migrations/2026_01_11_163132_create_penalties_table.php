@@ -14,7 +14,8 @@ return new class extends Migration
         Schema::create('penalties', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained();
-            $table->enum('type', ['warning', 'temporary_block', 'permanent_block']);
+            $table->enum('type', ['warning', 'temporary_block', 'permanent_block', 'unban', 'untimeout']);
+            $table->foreignId('initiator')->nullable()->constrained("users");
             $table->timestamp('expires_at')->nullable();
             $table->timestamps();
         });

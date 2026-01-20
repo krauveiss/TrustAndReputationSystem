@@ -9,6 +9,7 @@ class Penalty extends Model
     protected $fillable = [
         'user_id',
         'type',
+        'initiator',
         'expires_at'
     ];
 
@@ -17,7 +18,7 @@ class Penalty extends Model
         return $this->belongsTo(User::class);
     }
 
-    
+
     protected function casts(): array
     {
         return [

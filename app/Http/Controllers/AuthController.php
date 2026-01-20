@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Admin\BanRequest;
 use App\Http\Requests\Admin\UnbanRequest;
 use App\Http\Requests\Admin\UnTimeOutRequest;
 use App\Http\Requests\LoginRequest;
@@ -9,12 +10,15 @@ use App\Http\Requests\RegisterRequest;
 use App\Models\Reputation;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\PenaltyService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
+
+    public function __construct(protected PenaltyService $penalty_service) {}
     public function register(RegisterRequest $registerRequest)
     {
         $user = User::create([
@@ -68,12 +72,31 @@ class AuthController extends Controller
     public function unban(UnbanRequest $unbanRequest)
     {
         Gate::authorize('admin');
-        $request->user()
+
+        $user = User::find($unbanRequest->user_id);
+        $result = $this->penalty_service->unban($user, $unbanRequest->user());
+
+        return response()->json($result[0], $result[1]);
     }
+
+    public function ban(BanRequest $banRequest)
+    {
+        Gate::authorize('admin');
+
+        $user = User::find($banRequest->user_id);
+        $result = $this->penalty_service->force_ban($user, $banRequest->user());
+
+        return response()->json($result[0], $result[1]);
+    }
+
 
 
     public function untimeout(UnTimeOutRequest $unTimeOutRequest)
     {
         Gate::authorize('admin');
+        $user = User::find($unTimeOutRequest->user_id);
+        $result = $this->penalty_service->untimeout($user, $unTimeOutRequest->user());
+
+        return response()->json($result[0], $result[1]);
     }
 }

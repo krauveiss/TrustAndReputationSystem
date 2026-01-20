@@ -18,7 +18,6 @@ class UnbanRequest extends FormRequest
     {
         return [
             'user_id' => ['required', 'exists:users,id'],
-            'reputation' => ['required', 'integer'],
         ];
     }
 }
