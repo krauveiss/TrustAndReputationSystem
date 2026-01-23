@@ -7,6 +7,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\ViolationController;
 use App\Http\Middleware\CheckBan;
 use App\Http\Middleware\CheckTimeout;
+use App\Models\Report;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -23,11 +24,11 @@ Route::middleware(['auth:sanctum', CheckBan::class, CheckTimeout::class])->group
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/report', [ReportController::class, 'store']);
 
+
     Route::prefix("moderation")->group(function () {
         Route::patch('change_report_status', [ReportController::class, 'update']);
         Route::post('violation', [ViolationController::class, 'store']);
-
-        Route::get('/users', [UserController::class, 'index']);
+        Route::get('reports', [ReportController::class, 'index']);
     });
 
     Route::prefix("admin")->group(function () {

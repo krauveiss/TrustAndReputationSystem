@@ -13,10 +13,6 @@ class ReportService
     public function sendReport($user, $target_name, $reason)
     {
         try {
-            if (!$user || $user->status == "timeout" || $user->status == "banned") {
-                return [["text" => "Capabilities are limited."], 403];
-            }
-
             $target = User::where('name', $target_name)->first();
             if (!$target) {
                 return [["text" => "Wrong user"], 404];
