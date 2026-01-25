@@ -37,5 +37,6 @@ Route::middleware(['auth:sanctum', CheckBan::class, CheckTimeout::class])->group
         Route::post('unban', [AuthController::class, 'unban']);
         Route::post('ban', [AuthController::class, 'ban']);
         Route::post('untimeout', [AuthController::class, 'untimeout']);
+        Route::post('change_user_role', [AuthController::class, 'change_user_role']);
     });
 });

@@ -4,7 +4,7 @@ namespace App\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class SetReputation extends FormRequest
+class ChangeUserRoleRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -18,7 +18,7 @@ class SetReputation extends FormRequest
     {
         return [
             'user_id' => ['required', 'integer', 'exists:users,id'],
-            'reputation' => ['required', 'integer'],
+            'role' => ['required', 'integer', 'in:1,2']
         ];
     }
 }

@@ -28,6 +28,9 @@ class PenaltyService
         if ($user->status == 'banned') {
             return;
         }
+        if ($user->role_id == '3') {
+            return [["text" => 'Security error'], 403];
+        }
         DB::transaction(function () use ($user) {
             $user->status = 'timeout';
             $user->save();
@@ -70,6 +73,9 @@ class PenaltyService
         try {
             if ($user->status == 'banned') {
                 return [["text" => 'This user is already banned'], 400];
+            }
+            if ($user->role_id == '3') {
+                return [["text" => 'Security error'], 403];
             }
 
             DB::transaction(function () use ($user) {

@@ -25,7 +25,7 @@ class ReportController extends Controller
     {
         Gate::authorize("moderator");
 
-        $query = Report::orderBy('created_at', 'desc');
+        $query = Report::orderByRaw("status='pending' DESC")->orderBy('created_at', 'asc');
 
         if (isset($request->status)) {
             $query->where('status', $request->status);
@@ -33,8 +33,7 @@ class ReportController extends Controller
 
         $query->paginate(10);
         $reports = $query->get();
-        return ReportResource::collection($reports);
-        //return response()->json($reports);
+        return ReportResource::collection($reports);  
     }
 
     public function update(ChangeReportStatusRequest $changeReportStatusRequest)

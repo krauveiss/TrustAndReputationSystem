@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Admin\BanRequest;
+use App\Http\Requests\Admin\ChangeUserRoleRequest;
 use App\Http\Requests\Admin\UnbanRequest;
 use App\Http\Requests\Admin\UnTimeOutRequest;
 use App\Http\Requests\LoginRequest;
@@ -10,15 +11,18 @@ use App\Http\Requests\RegisterRequest;
 use App\Models\Reputation;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\LogService;
 use App\Services\PenaltyService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
+use Symfony\Component\HttpFoundation\Response;
 
 class AuthController extends Controller
 {
 
-    public function __construct(protected PenaltyService $penalty_service) {}
+    public function __construct(protected PenaltyService $penalty_service, protected LogService $log_service) {}
     public function register(RegisterRequest $registerRequest)
     {
         $user = User::create([
@@ -89,8 +93,6 @@ class AuthController extends Controller
         return response()->json($result[0], $result[1]);
     }
 
-
-
     public function untimeout(UnTimeOutRequest $unTimeOutRequest)
     {
         Gate::authorize('admin');
@@ -98,5 +100,21 @@ class AuthController extends Controller
         $result = $this->penalty_service->untimeout($user, $unTimeOutRequest->user());
 
         return response()->json($result[0], $result[1]);
+    }
+
+    public function change_user_role(ChangeUserRoleRequest $changeUserRoleRequest)
+    {
+        Gate::authorize('admin');
+
+        $user = User::find($changeUserRoleRequest->user_id);
+        $role = $changeUserRoleRequest->role;
+        DB::transaction(function () use ($user, $role) {
+            $user->role_id = $role;
+            $user->save();
+        });
+        $roleN = Role::find($role);
+        $this->log_service->log($user, request()->user(), 'changed role', "new role: {$role}($roleN->name)");
+
+        return response()->json(['text' => 'Success'], 200);
     }
 }

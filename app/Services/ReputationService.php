@@ -32,6 +32,7 @@ class ReputationService
             $repObj->save();
         });
         $this->recalculateLevel($user);
+
         return [['text' => 'Reputation changed'], 200];
     }
 
