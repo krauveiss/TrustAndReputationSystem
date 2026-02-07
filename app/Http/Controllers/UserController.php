@@ -9,7 +9,7 @@ class UserController extends Controller
 {
     public function  index()
     {
-        Gate::authorize('moderator');
+        //Gate::authorize('moderator');
 
         
     }

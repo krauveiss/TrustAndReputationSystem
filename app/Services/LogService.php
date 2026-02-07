@@ -8,12 +8,12 @@ use App\Models\User;
 
 class LogService
 {
-    function log($user, $executive, $action, $comment = '')
+    function log($user_id, $executive, $action, $comment = '')
     {
         AdminLog::create([
             'executive_id' => $executive->id,
             'action' => $action,
-            'user_id' => $user->id,
+            'user_id' => $user_id,
             'comment' => $comment
         ]);
     }

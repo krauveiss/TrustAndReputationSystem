@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Exceptions\Violations\SuspiciousActivityException;
+use App\Exceptions\Violations\UserNotFoundException;
+use App\Exceptions\Violations\ViolationNotFoundException;
 use App\Models\Reputation;
 use App\Models\User;
 use App\Models\Violation;
@@ -16,16 +19,16 @@ class ViolationService
     {
         $this->reputation_service = $reputation_service;
     }
-    public function addViolation($moderator, $user_id, $type, $severity, $comment = ''): array
+    public function addViolation($moderator, $user_id, $type, $severity, $comment = ''): void
     {
         $user = User::find($user_id);
         if (!$user) {
-            return [['text' => 'Not found user'], 404];
+            throw new UserNotFoundException();
         }
         if ($user->role->name != 'user') {
             $moderator->role_id = 1;
             $moderator->save();
-            return [['text' => 'Suspicious activity, rights revoked'], 403];
+            throw new SuspiciousActivityException();
         }
         $score_fine = 0;
         switch ($severity) {
@@ -49,16 +52,16 @@ class ViolationService
         ]);
 
         $this->reputation_service->changeScore($user, $score_fine);
-        return [['text' => 'Violation added, reputation changed'], 200];
     }
 
-    public function changeViolationStatus($violation_id, $status, $comment = ""): array
+    public function changeViolationStatus($violation_id, $status, $comment = ""): void
     {
         $violation = Violation::find($violation_id);
-
+        if (!$violation) {
+            throw new ViolationNotFoundException();
+        }
         $violation->status = $status;
         $violation->comment = $comment;
         $violation->save();
-        return [['text' => 'Violation status changed'], 200];
     }
 }

@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\Violations\UserNotFoundException;
 use App\Http\Requests\Admin\SetReputation;
 use App\Models\User;
 use App\Services\LogService;
 use App\Services\ReputationService;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 
 class ReputationController extends Controller
 {
@@ -16,11 +20,17 @@ class ReputationController extends Controller
     public function update(SetReputation $setReputation)
     {
         Gate::authorize('admin');
-        $user = User::find($setReputation->user_id);
-        $result = $this->reputation_service->setScore($user, $setReputation->reputation);
-        if ($result[1] == 200) {
-            $this->log_service->log($user, request()->user(), "set reputation", 'new reputation: ' . $setReputation->reputation);
+
+        try {
+            $this->reputation_service->setScore($setReputation->user_id, $setReputation->reputation);
+        } catch (UserNotFoundException $e) {
+            response()->json(['message' => $e->getMessage()], Response::HTTP_NOT_FOUND);
+        } catch (Exception $e) {
+            report($e);
+            response()->json(['message' => 'Something went wrong...'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-        return response()->json($result[0], $result[1]);
+
+        $this->log_service->log($setReputation->user_id, request()->user(), "set reputation", 'new reputation: ' . $setReputation->reputation);
+        return response()->json(['message' => 'Reputation changed'], Response::HTTP_OK);
     }
 }

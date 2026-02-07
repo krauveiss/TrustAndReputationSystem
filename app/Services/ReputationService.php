@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Exceptions\Violations\UserNotFoundException;
 use App\Models\Reputation;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 class ReputationService
@@ -24,16 +26,18 @@ class ReputationService
     }
 
 
-    public function setScore($user, $score)
+    public function setScore($user_id, $score): void
     {
+        $user = User::find($user_id);
+        if (!$user) {
+            throw new UserNotFoundException();
+        }
         DB::transaction(function () use ($user, $score) {
             $repObj = Reputation::where('user_id', $user->id)->first();
             $repObj->score = $score;
             $repObj->save();
         });
         $this->recalculateLevel($user);
-
-        return [['text' => 'Reputation changed'], 200];
     }
 
 
@@ -55,8 +59,7 @@ class ReputationService
         $now_score = Reputation::where('user_id', $user->id)->first()->score;
         if ($now_score <= -50) {
             $this->penalty_service->applyBan($user);
-        }
-        if ($now_score <= 0) {
+        } else if ($now_score <= 0 && $now_score > -50) {
             $this->penalty_service->applyTimeout($user);
         }
     }

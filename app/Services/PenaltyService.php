@@ -2,6 +2,10 @@
 
 namespace App\Services;
 
+use App\Exceptions\Admin\AttempToBanAdminException;
+use App\Exceptions\Admin\BanUserIsAlreadyBannedException;
+use App\Exceptions\Admin\NoTimeoutForUserException;
+use App\Exceptions\Admin\UnbanUserIsNotBannedException;
 use App\Models\Penalty;
 use Exception;
 use Illuminate\Support\Carbon;
@@ -43,83 +47,66 @@ class PenaltyService
         ]);
     }
 
-    public function unban($user, $admin)
+    public function unban($user, $admin): void
     {
-        try {
-            if ($user->status != 'banned') {
-                return [["text" => 'This user is not banned'], 400];
-            }
 
-            DB::transaction(function () use ($user) {
-                $user->status = 'active';
-                $user->save();
-            });
+        if ($user->status != 'banned') {
+            throw new UnbanUserIsNotBannedException();
+        }
+
+        DB::transaction(function () use ($user, $admin) {
+            $user->status = 'active';
+            $user->save();
+        });
+        Penalty::create([
+            'user_id' => $user->id,
+            'type' => 'unban',
+            'initiator' => $admin->id
+        ]);
+    }
+
+    public function force_ban($user, $admin): void
+    {
+        if ($user->status == 'banned') {
+            throw new BanUserIsAlreadyBannedException();
+        }
+        if ($user->role_id == '3') {
+            throw new AttempToBanAdminException();
+        }
+
+        DB::transaction(function () use ($user, $admin) {
+            $user->status = 'banned';
+            $user->save();
+        });
+        Penalty::create([
+            'user_id' => $user->id,
+            'type' => 'permanent_block',
+            'initiator' => $admin->id
+        ]);
+    }
+
+    public function untimeout($user, $admin): void
+    {
+
+        if ($user->status != 'timeout') {
+            throw new NoTimeoutForUserException();
+        }
+        $penalty = Penalty::where('user_id', $user->id)->where('type', 'temporary_block')->latest()->first();
+        if (!$penalty) {
+            throw new NoTimeoutForUserException();
+        }
+
+        $penalty->expires_at = Carbon::now();
+        $penalty->save();
+        DB::transaction(function () use ($user, $admin) {
+            $user->status = 'active';
+            $user->save();
 
             Penalty::create([
                 'user_id' => $user->id,
-                'type' => 'unban',
+                'type' => 'untimeout',
                 'initiator' => $admin->id
             ]);
-
-            return [["text" => 'Now user is active'], 200];
-        } catch (Exception $ex) {
-            return [["text" => 'Error'], 500];
-        }
-    }
-
-    public function force_ban($user, $admin)
-    {
-
-        try {
-            if ($user->status == 'banned') {
-                return [["text" => 'This user is already banned'], 400];
-            }
-            if ($user->role_id == '3') {
-                return [["text" => 'Security error'], 403];
-            }
-
-            DB::transaction(function () use ($user) {
-                $user->status = 'banned';
-                $user->save();
-            });
-
-            Penalty::create([
-                'user_id' => $user->id,
-                'type' => 'permanent_block',
-                'initiator' => $admin->id
-            ]);
-
-            return [["text" => 'Now user is banned'], 200];
-        } catch (Exception) {
-            return [["text" => 'Error'], 500];
-        }
-    }
-
-    public function untimeout($user, $admin)
-    {
-        try {
-            if ($user->status != 'timeout') {
-                return [['text' => 'No timeout for this user'], 400];
-            }
-            $penalty = Penalty::where('user_id', $user->id)->where('type', 'temporary_block')->latest()->first();
-            if (!$penalty) {
-                return [['text' => 'No timeout for this user'], 400];
-            } else {
-                $penalty->expires_at = Carbon::now();
-                $penalty->save();
-                DB::transaction(function () use ($user) {
-                    $user->status = 'active';
-                    $user->save();
-                });
-                Penalty::create([
-                    'user_id' => $user->id,
-                    'type' => 'untimeout',
-                    'initiator' => $admin->id
-                ]);
-                return [['text' => 'User is active now'], 200];
-            }
-        } catch (Exception) {
-            return [["text" => 'Error'], 500];
-        }
+        });
     }
 }
