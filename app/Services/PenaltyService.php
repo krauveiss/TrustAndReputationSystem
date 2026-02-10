@@ -2,10 +2,13 @@
 
 namespace App\Services;
 
+use App\Enums\PenaltyType;
+use App\Enums\UserStatus;
 use App\Exceptions\Admin\AttempToBanAdminException;
 use App\Exceptions\Admin\BanUserIsAlreadyBannedException;
 use App\Exceptions\Admin\NoTimeoutForUserException;
 use App\Exceptions\Admin\UnbanUserIsNotBannedException;
+use App\Exceptions\Penalty\UserIsAlreadyBannedException;
 use App\Models\Penalty;
 use Exception;
 use Illuminate\Support\Carbon;
@@ -17,57 +20,55 @@ class PenaltyService
     public function applyBan($user)
     {
         DB::transaction(function () use ($user) {
-            $user->status = 'banned';
+            $user->status = UserStatus::BANNED;
             $user->save();
-        });
 
-        Penalty::create([
-            'user_id' => $user->id,
-            'type' => 'permanent_block'
-        ]);
+            Penalty::create([
+                'user_id' => $user->id,
+                'type' =>  PenaltyType::PERM_BLOCK
+            ]);
+        });
     }
 
     public function applyTimeout($user)
     {
-        if ($user->status == 'banned') {
-            return;
-        }
-        if ($user->role_id == '3') {
-            return [["text" => 'Security error'], 403];
+        if ($user->status == UserStatus::BANNED) {
+            throw new UserIsAlreadyBannedException();
         }
         DB::transaction(function () use ($user) {
-            $user->status = 'timeout';
+            $user->status = UserStatus::TIMEOUT;
             $user->save();
-        });
 
-        Penalty::create([
-            'user_id' => $user->id,
-            'type' => 'temporary_block',
-            'expires_at' => Carbon::now()->addDays(1)
-        ]);
+            Penalty::create([
+                'user_id' => $user->id,
+                'type' => PenaltyType::TEMP_BLOCK,
+                'expires_at' => Carbon::now()->addDays(1)
+            ]);
+        });
     }
 
     public function unban($user, $admin): void
     {
 
-        if ($user->status != 'banned') {
+        if ($user->status != UserStatus::BANNED) {
             throw new UnbanUserIsNotBannedException();
         }
 
         DB::transaction(function () use ($user, $admin) {
-            $user->status = 'active';
+            $user->status = UserStatus::ACTIVE;
             $user->save();
+
+            Penalty::create([
+                'user_id' => $user->id,
+                'type' => PenaltyType::UNBAN,
+                'initiator' => $admin->id
+            ]);
         });
-        Penalty::create([
-            'user_id' => $user->id,
-            'type' => 'unban',
-            'initiator' => $admin->id
-        ]);
     }
 
     public function force_ban($user, $admin): void
     {
-        if ($user->status == 'banned') {
+        if ($user->status == UserStatus::BANNED) {
             throw new BanUserIsAlreadyBannedException();
         }
         if ($user->role_id == '3') {
@@ -75,20 +76,21 @@ class PenaltyService
         }
 
         DB::transaction(function () use ($user, $admin) {
-            $user->status = 'banned';
+            $user->status = UserStatus::BANNED;
             $user->save();
+
+            Penalty::create([
+                'user_id' => $user->id,
+                'type' => PenaltyType::PERM_BLOCK,
+                'initiator' => $admin->id
+            ]);
         });
-        Penalty::create([
-            'user_id' => $user->id,
-            'type' => 'permanent_block',
-            'initiator' => $admin->id
-        ]);
     }
 
     public function untimeout($user, $admin): void
     {
 
-        if ($user->status != 'timeout') {
+        if ($user->status != UserStatus::TIMEOUT) {
             throw new NoTimeoutForUserException();
         }
         $penalty = Penalty::where('user_id', $user->id)->where('type', 'temporary_block')->latest()->first();
@@ -99,12 +101,12 @@ class PenaltyService
         $penalty->expires_at = Carbon::now();
         $penalty->save();
         DB::transaction(function () use ($user, $admin) {
-            $user->status = 'active';
+            $user->status = UserStatus::ACTIVE;
             $user->save();
 
             Penalty::create([
                 'user_id' => $user->id,
-                'type' => 'untimeout',
+                'type' => PenaltyType::UNTIMEOUT,
                 'initiator' => $admin->id
             ]);
         });

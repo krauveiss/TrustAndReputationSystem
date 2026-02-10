@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\PenaltyType;
 use Illuminate\Database\Eloquent\Model;
 
 class Penalty extends Model
@@ -25,6 +26,7 @@ class Penalty extends Model
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
             'expires_at' => 'datetime',
+            'type' => PenaltyType::class
         ];
     }
 }

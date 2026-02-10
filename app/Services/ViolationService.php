@@ -14,10 +14,12 @@ use PhpParser\Node\Expr\Array_;
 class ViolationService
 {
     protected ReputationService $reputation_service;
+    protected LogService $log_service;
 
-    public function __construct(ReputationService $reputation_service)
+    public function __construct(ReputationService $reputation_service, LogService $log_service)
     {
         $this->reputation_service = $reputation_service;
+        $this->log_service = $log_service;
     }
     public function addViolation($moderator, $user_id, $type, $severity, $comment = ''): void
     {
@@ -28,6 +30,7 @@ class ViolationService
         if ($user->role->name != 'user') {
             $moderator->role_id = 1;
             $moderator->save();
+            $this->log_service->log($user_id, $moderator, 'prohibited action(add violation)', "params: {$type}({$severity})");
             throw new SuspiciousActivityException();
         }
         $score_fine = 0;

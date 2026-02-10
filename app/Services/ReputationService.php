@@ -18,10 +18,11 @@ class ReputationService
     public function changeScore($user, $score_fine)
     {
         DB::transaction(function () use ($user, $score_fine) {
-            $repObj = Reputation::where('user_id', $user->id)->first();
+            $repObj = Reputation::where('user_id', $user->id)->lockForUpdate()->first();
             $repObj->score = $repObj->score - $score_fine;
             $repObj->save();
         });
+
         $this->recalculateLevel($user);
     }
 
@@ -33,7 +34,7 @@ class ReputationService
             throw new UserNotFoundException();
         }
         DB::transaction(function () use ($user, $score) {
-            $repObj = Reputation::where('user_id', $user->id)->first();
+            $repObj = Reputation::where('user_id', $user->id)->lockForUpdate()->first();
             $repObj->score = $score;
             $repObj->save();
         });
@@ -44,7 +45,7 @@ class ReputationService
     protected function recalculateLevel($user)
     {
         DB::transaction(function () use ($user) {
-            $repObj = Reputation::where('user_id', $user->id)->first();
+            $repObj = Reputation::where('user_id', $user->id)->lockForUpdate()->first();
             $score = $repObj->score;
             if ($score >= 80) {
                 $repObj->level = 'high';
