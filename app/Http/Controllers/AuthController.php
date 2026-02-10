@@ -39,7 +39,7 @@ class AuthController extends Controller
 
         Reputation::create([
             'user_id' => $user->id,
-            'score' => 50,
+            'score' => 30,
             'level' => 'medium'
         ]);
 
@@ -141,7 +141,7 @@ class AuthController extends Controller
             $user->save();
         });
         $roleN = Role::find($role);
-        $this->log_service->log($user, request()->user(), 'changed role', "new role: {$role}($roleN->name)");
+        $this->log_service->log($user->id, request()->user(), 'changed role', "new role: {$role}($roleN->name)");
 
         return response()->json(['text' => 'Success'], 200);
     }
