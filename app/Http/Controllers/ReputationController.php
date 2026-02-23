@@ -24,10 +24,10 @@ class ReputationController extends Controller
         try {
             $this->reputation_service->setScore($setReputation->user_id, $setReputation->reputation);
         } catch (UserNotFoundException $e) {
-            response()->json(['message' => $e->getMessage()], Response::HTTP_NOT_FOUND);
+            return response()->json(['message' => $e->getMessage()], Response::HTTP_NOT_FOUND);
         } catch (Exception $e) {
             report($e);
-            response()->json(['message' => 'Something went wrong...'], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return response()->json(['message' => 'Something went wrong...'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
         $this->log_service->log($setReputation->user_id, request()->user(), "set reputation", 'new reputation: ' . $setReputation->reputation);
