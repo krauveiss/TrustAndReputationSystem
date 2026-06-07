@@ -49,6 +49,10 @@
             "@php artisan config:clear --ansi",
             "@php artisan test"
         ],
+        "security:sast": "powershell -ExecutionPolicy Bypass -File security/scripts/sast.ps1",
+        "security:sca": "powershell -ExecutionPolicy Bypass -File security/scripts/sca.ps1",
+        "security:dast": "powershell -ExecutionPolicy Bypass -File security/scripts/dast.ps1",
+        "security:all": "powershell -ExecutionPolicy Bypass -File security/scripts/all.ps1",
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi"

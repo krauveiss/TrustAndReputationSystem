@@ -1,0 +1,57 @@
+rules:
+  - id: php-dangerous-command-execution
+    message: User-controlled command execution can lead to remote code execution.
+    severity: ERROR
+    languages:
+      - php
+    metadata:
+      category: security
+      cwe:
+        - "CWE-78: OS Command Injection"
+      owasp:
+        - A03:2021 - Injection
+    patterns:
+      - pattern-either:
+          - pattern: exec($COMMAND, ...)
+          - pattern: shell_exec($COMMAND)
+          - pattern: system($COMMAND, ...)
+          - pattern: passthru($COMMAND, ...)
+
+  - id: php-unsafe-unserialize
+    message: Untrusted data passed to unserialize can lead to object injection.
+    severity: ERROR
+    languages:
+      - php
+    metadata:
+      category: security
+      cwe:
+        - "CWE-502: Deserialization of Untrusted Data"
+      owasp:
+        - A08:2021 - Software and Data Integrity Failures
+    pattern: unserialize($DATA, ...)
+
+  - id: laravel-debug-enabled-env
+    message: APP_DEBUG must be disabled in shared environment templates.
+    severity: WARNING
+    languages:
+      - generic
+    metadata:
+      category: security
+      cwe:
+        - "CWE-489: Active Debug Code"
+      owasp:
+        - A05:2021 - Security Misconfiguration
+    pattern-regex: (?m)^APP_DEBUG=true$
+
+  - id: laravel-weak-password-min-length
+    message: Password minimum length below 8 characters is weak.
+    severity: WARNING
+    languages:
+      - generic
+    metadata:
+      category: security
+      cwe:
+        - "CWE-521: Weak Password Requirements"
+      owasp:
+        - A07:2021 - Identification and Authentication Failures
+    pattern-regex: "password['\"]\\s*=>\\s*\\[[^\\n]*min:[0-7]['\"]"

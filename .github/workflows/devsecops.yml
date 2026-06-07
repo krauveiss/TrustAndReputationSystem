@@ -1,0 +1,124 @@
+name: DevSecOps
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  sast:
+    name: SAST Semgrep
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep:latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare reports directory
+        run: mkdir -p security/reports
+
+      - name: Run Semgrep
+        run: semgrep scan --config security/semgrep.yml --sarif --output security/reports/semgrep-report.sarif .
+
+      - name: Upload SAST report
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-sast-report
+          path: security/reports/semgrep-report.sarif
+
+  sca:
+    name: SCA Dependency Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          tools: composer
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Install Node dependencies
+        run: npm install
+
+      - name: Prepare reports directory
+        run: mkdir -p security/reports
+
+      - name: Run Composer audit
+        run: composer audit --locked --format=json > security/reports/composer-audit.json
+        continue-on-error: true
+
+      - name: Run npm audit
+        run: npm audit --json > security/reports/npm-audit.json
+        continue-on-error: true
+
+      - name: Upload SCA reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-audit-reports
+          path: |
+            security/reports/composer-audit.json
+            security/reports/npm-audit.json
+
+  dast:
+    name: DAST OWASP ZAP
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          extensions: sqlite, pdo_sqlite
+          tools: composer
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Prepare Laravel
+        run: |
+          mkdir -p security/reports
+          cp .env.example .env
+          php artisan key:generate
+          touch database/database.sqlite
+          php artisan migrate --force
+
+      - name: Start Laravel
+        run: php artisan serve --host=127.0.0.1 --port=8000 &
+
+      - name: Run ZAP baseline scan
+        uses: zaproxy/action-baseline@v0.14.0
+        with:
+          target: http://127.0.0.1:8000
+          rules_file_name: security/zap-rules.tsv
+          fail_action: false
+          cmd_options: -a -r security/reports/zap-report.html -J security/reports/zap-report.json
+
+      - name: Upload DAST report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-dast-report
+          path: |
+            security/reports/zap-report.html
+            security/reports/zap-report.json
